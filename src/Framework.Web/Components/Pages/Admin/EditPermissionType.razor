@@ -1,0 +1,121 @@
+@page "/admin/permissions/{Id:guid}"
+@rendermode InteractiveServer
+@using Framework.Application.Identity.PermissionCatalog
+@using MediatR
+@attribute [HasPermission(Permissions.PermissionTypes.Edit)]
+@inject IMediator Mediator
+@inject NavigationManager Navigation
+
+<PageTitle>Edit permission</PageTitle>
+
+<PageHeader Eyebrow="Permissions" Title="Edit permission" Subtitle="The permission name stays the same so existing role assignments keep working." />
+
+<AlertBanner Message="@message" IsError="isError" />
+
+@if (model is null)
+{
+    <p class="text-sm text-gray-600">Loading…</p>
+}
+else
+{
+    <div class="card max-w-xl">
+        <p class="mb-4 text-sm text-gray-600"><code>@model.Name</code></p>
+        @if (model.IsSystem)
+        {
+            <p class="mb-6 text-sm text-gray-600">Built-in permissions can be renamed for display, but they cannot be deleted.</p>
+        }
+        <EditForm Model="model" OnValidSubmit="SaveAsync">
+            <label class="field">
+                <span class="field-label">Group</span>
+                <InputText class="field-input" @bind-Value="model.Group" />
+            </label>
+            <label class="field">
+                <span class="field-label">Display name</span>
+                <InputText class="field-input" @bind-Value="model.DisplayName" />
+            </label>
+            <label class="field">
+                <span class="field-label">Description</span>
+                <InputText class="field-input" @bind-Value="model.Description" />
+            </label>
+            <div class="flex flex-wrap gap-3">
+                <button type="submit" class="btn btn-primary" disabled="@saving">Save changes</button>
+                <a href="admin/permissions" class="btn btn-secondary">Back</a>
+                @if (!model.IsSystem)
+                {
+                    <AuthorizeView Policy="@Permissions.PermissionTypes.Delete" Context="auth">
+                        <button type="button" class="btn btn-danger ml-auto" disabled="@saving" @onclick="DeleteAsync">Delete</button>
+                    </AuthorizeView>
+                }
+            </div>
+        </EditForm>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private FormModel? model;
+    private string? message;
+    private bool isError;
+    private bool saving;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var permission = await Mediator.Send(new GetPermissionQuery(Id));
+        if (permission is null)
+        {
+            Navigation.NavigateTo("admin/permissions");
+            return;
+        }
+
+        model = new FormModel
+        {
+            Name = permission.Name,
+            Group = permission.Group,
+            DisplayName = permission.DisplayName,
+            Description = permission.Description,
+            IsSystem = permission.IsSystem
+        };
+    }
+
+    private async Task SaveAsync()
+    {
+        if (model is null)
+        {
+            return;
+        }
+
+        saving = true;
+        var result = await Mediator.Send(new UpdatePermissionCommand(Id, model.Group, model.DisplayName, model.Description));
+        saving = false;
+
+        isError = !result.Succeeded;
+        message = result.Succeeded ? "Permission updated." : string.Join(" ", result.Errors);
+    }
+
+    private async Task DeleteAsync()
+    {
+        saving = true;
+        var result = await Mediator.Send(new DeletePermissionCommand(Id));
+        saving = false;
+
+        if (result.Succeeded)
+        {
+            Navigation.NavigateTo("admin/permissions");
+            return;
+        }
+
+        isError = true;
+        message = string.Join(" ", result.Errors);
+    }
+
+    private sealed class FormModel
+    {
+        public string Name { get; set; } = "";
+        public string Group { get; set; } = "";
+        public string DisplayName { get; set; } = "";
+        public string? Description { get; set; }
+        public bool IsSystem { get; set; }
+    }
+}

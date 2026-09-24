@@ -1,0 +1,77 @@
+@page "/admin/permissions"
+@rendermode InteractiveServer
+@using Framework.Application.Identity
+@using Framework.Application.Identity.PermissionCatalog
+@using MediatR
+@attribute [HasPermission(Permissions.PermissionTypes.View)]
+@inject IMediator Mediator
+
+<PageTitle>Permissions</PageTitle>
+
+<PageHeader Eyebrow="Administration" Title="Permissions" Subtitle="Add permission types here. Assign them to roles without rebuilding the app. Built-in permissions stay in code so pages can keep using them.">
+    <AuthorizeView Policy="@Permissions.PermissionTypes.Create">
+        <a href="admin/permissions/new" class="btn btn-primary">New permission</a>
+    </AuthorizeView>
+</PageHeader>
+
+<div class="table-wrap">
+    @if (permissions is null)
+    {
+        <p class="px-6 py-10 text-sm text-gray-600">Loading permissions…</p>
+    }
+    else if (permissions.Count == 0)
+    {
+        <div class="px-6 py-16 text-center">
+            <h2 class="text-md font-semibold text-gray-900">No permissions yet</h2>
+            <p class="mt-1 text-sm text-gray-600">Create a permission type to assign it to roles.</p>
+        </div>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Permission</th>
+                    <th>Group</th>
+                    <th>Type</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var permission in permissions)
+                {
+                    <tr>
+                        <td>
+                            <div class="font-medium text-gray-900">@permission.DisplayName</div>
+                            <div class="text-sm text-gray-600">@permission.Name</div>
+                            @if (!string.IsNullOrWhiteSpace(permission.Description))
+                            {
+                                <div class="mt-1 text-sm text-gray-500">@permission.Description</div>
+                            }
+                        </td>
+                        <td>@permission.Group</td>
+                        <td>
+                            <span class="badge @(permission.IsSystem ? "badge-gray" : "badge-brand")">
+                                @(permission.IsSystem ? "Built-in" : "Custom")
+                            </span>
+                        </td>
+                        <td class="text-right">
+                            <AuthorizeView Policy="@Permissions.PermissionTypes.Edit">
+                                <a class="text-sm font-semibold text-brand-700 hover:text-brand-800" href="@($"admin/permissions/{permission.Id}")">Edit</a>
+                            </AuthorizeView>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    private IReadOnlyList<PermissionListItemDto>? permissions;
+
+    protected override async Task OnInitializedAsync()
+    {
+        permissions = await Mediator.Send(new GetPermissionsQuery());
+    }
+}

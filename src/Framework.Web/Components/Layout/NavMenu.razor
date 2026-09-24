@@ -1,0 +1,98 @@
+﻿<aside id="app-sidebar" class="sidebar" aria-label="Sidebar">
+    <div class="sidebar-header flex h-16 items-center justify-between gap-2 border-b border-gray-200 px-3 lg:px-4">
+        <BrandMark Class="sidebar-brand min-w-0" />
+        <button type="button"
+                class="inline-flex size-9 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-700 lg:hidden"
+                data-sidebar-close
+                aria-label="Close menu">
+            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true">
+                <path stroke-linecap="round" d="M6 6l12 12M18 6 6 18" />
+            </svg>
+        </button>
+        <button type="button"
+                class="sidebar-collapse hidden size-9 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-700 lg:inline-flex"
+                data-sidebar-collapse
+                aria-controls="app-sidebar"
+                aria-expanded="true"
+                aria-label="Collapse sidebar">
+            <svg class="sidebar-collapse-icon size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 6 9 12l6 6" />
+            </svg>
+        </button>
+    </div>
+
+    <nav class="sidebar-nav flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
+        <NavLink href="" Match="NavLinkMatch.All" class="nav-link-item" ActiveClass="is-active" title="Home">
+            @HomeIcon
+            <span class="sidebar-label">Home</span>
+        </NavLink>
+        <AuthorizeView>
+            <Authorized>
+                <AuthorizeView Policy="@Permissions.Dashboard.View" Context="dashboard">
+                    <NavLink href="dashboard" class="nav-link-item" ActiveClass="is-active" title="Dashboard">
+                        @GridIcon
+                        <span class="sidebar-label">Dashboard</span>
+                    </NavLink>
+                </AuthorizeView>
+                <AuthorizeView Policy="@Permissions.Users.View" Context="users">
+                    <p class="sidebar-section">Administration</p>
+                    <NavLink href="admin/users" class="nav-link-item" ActiveClass="is-active" title="Users">
+                        @UsersIcon
+                        <span class="sidebar-label">Users</span>
+                    </NavLink>
+                </AuthorizeView>
+                <AuthorizeView Policy="@Permissions.Roles.View" Context="roles">
+                    <NavLink href="admin/roles" class="nav-link-item" ActiveClass="is-active" title="Roles">
+                        @ShieldIcon
+                        <span class="sidebar-label">Roles</span>
+                    </NavLink>
+                </AuthorizeView>
+                <AuthorizeView Policy="@Permissions.PermissionTypes.View" Context="permissionTypes">
+                    <NavLink href="admin/permissions" class="nav-link-item" ActiveClass="is-active" title="Permissions">
+                        @KeyIcon
+                        <span class="sidebar-label">Permissions</span>
+                    </NavLink>
+                </AuthorizeView>
+                <AuthorizeView Policy="@Permissions.Jobs.View" Context="jobs">
+                    <a href="hangfire" class="nav-link-item" title="Jobs">
+                        @ClockIcon
+                        <span class="sidebar-label">Jobs</span>
+                    </a>
+                </AuthorizeView>
+            </Authorized>
+        </AuthorizeView>
+    </nav>
+
+    <div class="sidebar-footer border-t border-gray-200 p-3">
+        <AuthorizeView>
+            <Authorized>
+                <AccountMenu Id="sidebar"
+                             Placement="sidebar"
+                             Name="@context.User.Identity?.Name"
+                             Email="@context.User.Identity?.Name"
+                             Subtitle="Signed in"
+                             TriggerClass="account-menu-trigger w-full"
+                             MetaClass="account-menu-meta sidebar-user-meta min-w-0 flex-1" />
+            </Authorized>
+            <NotAuthorized>
+                <a href="Account/Login" class="btn btn-primary w-full sidebar-label" title="Sign in">Sign in</a>
+                <a href="Account/Login"
+                   class="sidebar-collapsed-only size-10 items-center justify-center rounded-lg bg-brand-600 text-white hover:bg-brand-700"
+                   title="Sign in"
+                   aria-label="Sign in">
+                    @LoginIcon
+                </a>
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
+</aside>
+
+@code {
+    private static RenderFragment HomeIcon => @<svg class="size-5 shrink-0 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" /></svg>;
+    private static RenderFragment GridIcon => @<svg class="size-5 shrink-0 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" /></svg>;
+    private static RenderFragment UsersIcon => @<svg class="size-5 shrink-0 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M12 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7M20 19v-1a3.5 3.5 0 0 0-2.5-3.35M16.5 4.15a3.5 3.5 0 0 1 0 6.7" /></svg>;
+    private static RenderFragment ShieldIcon => @<svg class="size-5 shrink-0 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3 5 6v6c0 4.5 2.9 7.4 7 9 4.1-1.6 7-4.5 7-9V6z" /></svg>;
+    private static RenderFragment ClockIcon => @<svg class="size-5 shrink-0 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><circle cx="12" cy="12" r="8" /><path stroke-linecap="round" d="M12 8v4.5L15 14" /></svg>;
+    private static RenderFragment KeyIcon => @<svg class="size-5 shrink-0 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 14a4 4 0 1 1 3.5-5.9L20 16.6V20h-3.4l-2.2-2.2M8 10h.01" /></svg>;
+    private static RenderFragment LoginIcon => @<svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10 12h10M16 8l4 4-4 4M9 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h3" /></svg>;
+}

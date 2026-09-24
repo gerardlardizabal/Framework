@@ -1,0 +1,142 @@
+@page "/admin/users/new"
+@rendermode InteractiveServer
+@using Framework.Application.Identity.Roles
+@using Framework.Application.Identity.Users
+@using MediatR
+@attribute [HasPermission(Permissions.Users.Create)]
+@inject IMediator Mediator
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>New user</PageTitle>
+
+<PageHeader Eyebrow="Users" Title="Create user" Subtitle="The new account is confirmed immediately so it can sign in right away." />
+
+<AlertBanner Message="@message" IsError="true" />
+
+<div class="card max-w-2xl">
+    <EditForm Model="model" OnValidSubmit="SaveAsync">
+        <DataAnnotationsValidator />
+        <div class="grid gap-4 sm:grid-cols-2">
+            <label class="field">
+                <span class="field-label">First name</span>
+                <InputText class="field-input" @bind-Value="model.FirstName" />
+            </label>
+            <label class="field">
+                <span class="field-label">Last name</span>
+                <InputText class="field-input" @bind-Value="model.LastName" />
+            </label>
+        </div>
+        <label class="field">
+            <span class="field-label">Email</span>
+            <InputText class="field-input" @bind-Value="model.Email" />
+            <ValidationMessage For="() => model.Email" />
+        </label>
+        <label class="field">
+            <span class="field-label">Password</span>
+            <InputText type="password" class="field-input" @bind-Value="model.Password" />
+            <ValidationMessage For="() => model.Password" />
+        </label>
+        <label class="mb-4 flex items-center gap-2 text-sm">
+            <InputCheckbox @bind-Value="model.IsActive" class="size-4 rounded border-gray-300 text-brand-600" />
+            Active
+        </label>
+        <fieldset class="mb-6">
+            <legend class="mb-2 text-sm font-medium">Roles</legend>
+            <div class="flex flex-wrap gap-3">
+                @foreach (var role in roles)
+                {
+                    <label class="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-xs">
+                        <input type="checkbox" class="size-4 rounded border-gray-300 text-brand-600"
+                               checked="@model.Roles.Contains(role)"
+                               @onchange="e => ToggleRole(role, e.Value is true)" />
+                        @role
+                    </label>
+                }
+            </div>
+        </fieldset>
+        <div class="flex gap-3">
+            <button type="submit" class="btn btn-primary" disabled="@saving">Create user</button>
+            <a href="admin/users" class="btn btn-secondary">Cancel</a>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    private readonly FormModel model = new();
+    private IReadOnlyList<string> roles = [];
+    private string? message;
+    private bool saving;
+
+    protected override async Task OnInitializedAsync()
+    {
+        roles = await Mediator.Send(new GetRoleNamesQuery());
+        if (roles.Contains(RoleNames.User))
+        {
+            model.Roles.Add(RoleNames.User);
+        }
+    }
+
+    private void ToggleRole(string role, bool selected)
+    {
+        if (selected)
+        {
+            model.Roles.Add(role);
+        }
+        else
+        {
+            model.Roles.Remove(role);
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        saving = true;
+        var result = await Mediator.Send(new CreateUserCommand(
+            model.Email,
+            model.Password,
+            model.FirstName,
+            model.LastName,
+            model.IsActive,
+            model.Roles.ToArray()));
+        saving = false;
+
+        if (result.Succeeded)
+        {
+            await JS.InvokeVoidAsync("frameworkUi.toast", new
+            {
+                kind = "success",
+                title = "User created",
+                message = $"{model.Email} can now sign in.",
+                actionUrl = $"admin/users/{result.Value}",
+                actionText = "View user"
+            });
+            try
+            {
+                await JS.InvokeVoidAsync("frameworkUi.refreshNotifications");
+            }
+            catch (JSException)
+            {
+            }
+
+            Navigation.NavigateTo("admin/users");
+            return;
+        }
+
+        message = string.Join(" ", result.Errors);
+    }
+
+    private sealed class FormModel
+    {
+        [System.ComponentModel.DataAnnotations.Required, System.ComponentModel.DataAnnotations.EmailAddress]
+        public string Email { get; set; } = "";
+
+        [System.ComponentModel.DataAnnotations.Required, System.ComponentModel.DataAnnotations.MinLength(8)]
+        public string Password { get; set; } = "";
+
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+        public bool IsActive { get; set; } = true;
+        public HashSet<string> Roles { get; } = [];
+    }
+}

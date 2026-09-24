@@ -1,0 +1,25 @@
+﻿@using Framework.Web.Components.Account.Shared
+<Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+    <Found Context="routeData">
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
+            <NotAuthorized>
+                @if (context.User.Identity?.IsAuthenticated != true)
+                {
+                    <RedirectToLogin />
+                }
+                else
+                {
+                    <LayoutView Layout="typeof(Layout.MainLayout)">
+                        <PageTitle>Access denied</PageTitle>
+                        <div class="mx-auto max-w-lg py-10 text-center">
+                            <h1 class="text-3xl font-semibold tracking-tight text-gray-900">Access denied</h1>
+                            <p class="mt-2 text-md text-gray-600">You do not have permission to view that page.</p>
+                            <a href="dashboard" class="btn btn-primary mt-8">Back to dashboard</a>
+                        </div>
+                    </LayoutView>
+                }
+            </NotAuthorized>
+        </AuthorizeRouteView>
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+</Router>

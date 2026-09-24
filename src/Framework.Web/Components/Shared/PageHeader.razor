@@ -1,0 +1,33 @@
+<div class="mb-8 flex flex-col gap-4 border-b border-gray-200 pb-5 sm:flex-row sm:items-start sm:justify-between">
+    <div class="min-w-0">
+        @if (!string.IsNullOrWhiteSpace(Eyebrow))
+        {
+            <p class="text-sm font-semibold text-brand-700">@Eyebrow</p>
+        }
+        <h1 class="mt-1 text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">@Title</h1>
+        @if (!string.IsNullOrWhiteSpace(Subtitle))
+        {
+            <p class="mt-1 max-w-2xl text-md text-gray-600">@Subtitle</p>
+        }
+    </div>
+    @if (ChildContent is not null)
+    {
+        <div class="flex shrink-0 flex-wrap items-center gap-3">
+            @ChildContent
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string? Eyebrow { get; set; }
+
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = "";
+
+    [Parameter]
+    public string? Subtitle { get; set; }
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}

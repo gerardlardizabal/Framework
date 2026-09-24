@@ -1,0 +1,88 @@
+@page "/admin/users"
+@rendermode InteractiveServer
+@using Framework.Application.Identity
+@using Framework.Application.Identity.Users
+@using MediatR
+@attribute [HasPermission(Permissions.Users.View)]
+@inject IMediator Mediator
+
+<PageTitle>Users</PageTitle>
+
+<PageHeader Eyebrow="Administration" Title="Users" Subtitle="Create accounts, assign roles, and deactivate access.">
+    <AuthorizeView Policy="@Permissions.Users.Create">
+        <a href="admin/users/new" class="btn btn-primary">New user</a>
+    </AuthorizeView>
+</PageHeader>
+
+<div class="table-wrap">
+    @if (users is null)
+    {
+        <p class="px-6 py-10 text-sm text-gray-600">Loading users…</p>
+    }
+    else if (users.Count == 0)
+    {
+        <div class="px-6 py-16 text-center">
+            <span class="icon-well mx-auto">
+                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M12 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7" /></svg>
+            </span>
+            <h2 class="mt-4 text-md font-semibold text-gray-900">No users yet</h2>
+            <p class="mt-1 text-sm text-gray-600">Create an account to get started.</p>
+        </div>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Roles</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in users)
+                {
+                    <tr>
+                        <td>
+                            <div class="flex items-center gap-3">
+                                <UserAvatar Name="@user.DisplayName" Email="@user.Email" />
+                                <div>
+                                    <div class="font-medium text-gray-900">@user.DisplayName</div>
+                                    <div class="text-sm text-gray-600">@user.Email</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="flex flex-wrap gap-1.5">
+                                @foreach (var role in user.Roles)
+                                {
+                                    <span class="badge badge-gray">@role</span>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge @(user.IsActive ? "badge-success" : "badge-gray")">
+                                @(user.IsActive ? "Active" : "Disabled")
+                            </span>
+                        </td>
+                        <td class="text-right">
+                            <AuthorizeView Policy="@Permissions.Users.Edit">
+                                <a class="text-sm font-semibold text-brand-700 hover:text-brand-800" href="@($"admin/users/{user.Id}")">Edit</a>
+                            </AuthorizeView>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    private IReadOnlyList<UserListItemDto>? users;
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await Mediator.Send(new GetUsersQuery());
+    }
+}

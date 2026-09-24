@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>Framework.Web</RootNamespace>
+    <UserSecretsId>aspnet-Framework-Web-7c3d1e2a-4b8f-4c9a-9d21-1a2b3c4d5e6f</UserSecretsId>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Serilog.AspNetCore" />
+    <PackageReference Include="Serilog.Enrichers.Environment" />
+    <PackageReference Include="Serilog.Enrichers.Thread" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Framework.Application\Framework.Application.csproj" />
+    <ProjectReference Include="..\Framework.Infrastructure\Framework.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <Target Name="TailwindRestore" BeforeTargets="TailwindBuild" Inputs="package.json;package-lock.json" Outputs="node_modules\.package-lock.json">
+    <Exec Command="npm install" WorkingDirectory="$(MSBuildProjectDirectory)" />
+  </Target>
+
+  <Target Name="TailwindBuild" BeforeTargets="BeforeBuild">
+    <PropertyGroup>
+      <TailwindArgs Condition="'$(Configuration)' == 'Release'">--minify</TailwindArgs>
+    </PropertyGroup>
+    <MakeDir Directories="$(MSBuildProjectDirectory)\wwwroot\css" />
+    <Exec Command="npx @tailwindcss/cli -i ./Styles/app.css -o ./wwwroot/css/app.css $(TailwindArgs)" WorkingDirectory="$(MSBuildProjectDirectory)" />
+  </Target>
+</Project>

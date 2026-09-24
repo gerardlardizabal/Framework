@@ -1,0 +1,61 @@
+﻿@page "/"
+
+<PageTitle>Framework</PageTitle>
+
+<section>
+    <p class="text-sm font-semibold text-brand-700">.NET 10 · Blazor · Tailwind v4</p>
+    <h1 class="mt-3 max-w-3xl text-4xl font-semibold tracking-tight text-gray-900 sm:text-5xl">A clean starting point for serious applications.</h1>
+    <p class="mt-4 max-w-2xl text-lg text-gray-600">
+        Identity, role-based permissions, and a layered architecture you can grow without painting yourself into a corner.
+    </p>
+    <div class="mt-8 flex flex-wrap gap-3">
+        <AuthorizeView>
+            <Authorized>
+                <a href="dashboard" class="btn btn-primary">Open dashboard</a>
+            </Authorized>
+            <NotAuthorized>
+                <a href="Account/Login" class="btn btn-primary">Sign in</a>
+                <a href="Account/Register" class="btn btn-secondary">Create an account</a>
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
+</section>
+
+<section class="mt-10 grid gap-4 md:grid-cols-3">
+    <article class="metric-card">
+        <span class="icon-well">
+            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" /></svg>
+        </span>
+        <h2 class="mt-4 text-md font-semibold text-gray-900">Clean Architecture</h2>
+        <p class="mt-1 text-sm text-gray-600">Domain, Application, Infrastructure, and Web stay isolated.</p>
+    </article>
+    <article class="metric-card">
+        <span class="icon-well">
+            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3 5 6v6c0 4.5 2.9 7.4 7 9 4.1-1.6 7-4.5 7-9V6z" /></svg>
+        </span>
+        <h2 class="mt-4 text-md font-semibold text-gray-900">Permissions</h2>
+        <p class="mt-1 text-sm text-gray-600">Policies generated from a catalog and assigned through roles.</p>
+    </article>
+    <article class="metric-card">
+        <span class="icon-well">
+            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 12h10M4 17h7" /></svg>
+        </span>
+        <h2 class="mt-4 text-md font-semibold text-gray-900">Tailwind v4</h2>
+        <p class="mt-1 text-sm text-gray-600">CSS-first theme tokens compiled as part of the .NET build.</p>
+    </article>
+</section>
+
+<section class="mt-4 grid gap-4 md:grid-cols-3">
+    <article class="card">
+        <h2 class="text-md">Default administrator</h2>
+        <p class="mt-2 text-sm leading-6 text-gray-600">Sign in with <code>admin@localhost</code> / <code>Admin123!</code> after the first run.</p>
+    </article>
+    <article class="card">
+        <h2 class="text-md">User administration</h2>
+        <p class="mt-2 text-sm leading-6 text-gray-600">Create users, assign roles, and deactivate accounts without leaving the app.</p>
+    </article>
+    <article class="card">
+        <h2 class="text-md">Role permissions</h2>
+        <p class="mt-2 text-sm leading-6 text-gray-600">Tick permissions per role. Administrators always keep full access.</p>
+    </article>
+</section>

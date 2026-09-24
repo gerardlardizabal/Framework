@@ -1,0 +1,87 @@
+@page "/admin/permissions/new"
+@rendermode InteractiveServer
+@using Framework.Application.Identity.PermissionCatalog
+@using MediatR
+@attribute [HasPermission(Permissions.PermissionTypes.Create)]
+@inject IMediator Mediator
+@inject NavigationManager Navigation
+
+<PageTitle>New permission</PageTitle>
+
+<PageHeader Eyebrow="Permissions" Title="Create permission" Subtitle="The generated name is stored in the database and can be assigned to roles immediately." />
+
+<AlertBanner Message="@message" IsError="true" />
+
+<div class="card max-w-xl">
+    <EditForm Model="model" OnValidSubmit="SaveAsync">
+        <DataAnnotationsValidator />
+        <label class="field">
+            <span class="field-label">Group</span>
+            <InputText class="field-input" @bind-Value="model.Group" placeholder="Reports" />
+            <ValidationMessage For="() => model.Group" />
+            <p class="mt-1.5 text-sm text-gray-600">Used to group permissions in role assignment. Letters and numbers only.</p>
+        </label>
+        <label class="field">
+            <span class="field-label">Action</span>
+            <InputText class="field-input" @bind-Value="model.Action" placeholder="View" />
+            <ValidationMessage For="() => model.Action" />
+        </label>
+        <label class="field">
+            <span class="field-label">Display name</span>
+            <InputText class="field-input" @bind-Value="model.DisplayName" placeholder="View reports" />
+        </label>
+        <label class="field">
+            <span class="field-label">Description</span>
+            <InputText class="field-input" @bind-Value="model.Description" />
+        </label>
+        <p class="mb-6 rounded-lg bg-gray-50 px-3.5 py-2.5 text-sm text-gray-700">
+            Name: <code>@PreviewName</code>
+        </p>
+        <div class="flex gap-3">
+            <button type="submit" class="btn btn-primary" disabled="@saving">Create permission</button>
+            <a href="admin/permissions" class="btn btn-secondary">Cancel</a>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    private readonly FormModel model = new();
+    private string? message;
+    private bool saving;
+
+    private string PreviewName =>
+        string.IsNullOrWhiteSpace(model.Group) || string.IsNullOrWhiteSpace(model.Action)
+            ? "Permissions.{Group}.{Action}"
+            : Permissions.CreateName(model.Group, model.Action);
+
+    private async Task SaveAsync()
+    {
+        saving = true;
+        var result = await Mediator.Send(new CreatePermissionCommand(
+            model.Group,
+            model.Action,
+            model.DisplayName,
+            model.Description));
+        saving = false;
+
+        if (result.Succeeded)
+        {
+            Navigation.NavigateTo("admin/permissions");
+            return;
+        }
+
+        message = string.Join(" ", result.Errors);
+    }
+
+    private sealed class FormModel
+    {
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Group { get; set; } = "";
+
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Action { get; set; } = "";
+
+        public string? DisplayName { get; set; }
+        public string? Description { get; set; }
+    }
+}

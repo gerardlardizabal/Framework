@@ -1,0 +1,52 @@
+@page "/dashboard"
+@using Framework.Application.Common.Interfaces
+@attribute [HasPermission(Permissions.Dashboard.View)]
+@inject ICurrentUser CurrentUser
+
+<PageTitle>Dashboard</PageTitle>
+
+<PageHeader Eyebrow="Workspace" Title="Welcome back" Subtitle="@($"You are signed in as {CurrentUser.Email}.")" />
+
+<div class="grid gap-4 sm:grid-cols-2">
+    <article class="metric-card">
+        <span class="icon-well">
+            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4M4 20a8 8 0 0 1 16 0" /></svg>
+        </span>
+        <h2 class="mt-4 text-md font-semibold text-gray-900">Identity</h2>
+        <p class="mt-1 text-sm text-gray-600">ASP.NET Core Identity with cookie authentication, 2FA, and passkeys.</p>
+    </article>
+    <article class="metric-card">
+        <span class="icon-well">
+            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3 5 6v6c0 4.5 2.9 7.4 7 9 4.1-1.6 7-4.5 7-9V6z" /></svg>
+        </span>
+        <h2 class="mt-4 text-md font-semibold text-gray-900">Permissions</h2>
+        <p class="mt-1 text-sm text-gray-600">Authorization policies are created dynamically from <code>Permissions</code>.</p>
+        <AuthorizeView Policy="@Permissions.Users.View">
+            <p class="mt-3 text-sm font-semibold text-brand-700">You can manage users.</p>
+        </AuthorizeView>
+    </article>
+    <article class="metric-card">
+        <span class="icon-well">
+            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><circle cx="12" cy="12" r="8" /><path stroke-linecap="round" d="M12 8v4.5L15 14" /></svg>
+        </span>
+        <h2 class="mt-4 text-md font-semibold text-gray-900">Jobs</h2>
+        <p class="mt-1 text-sm text-gray-600">Hangfire runs background work. Open the dashboard from the sidebar if you have <code>Permissions.Jobs.View</code>.</p>
+        <AuthorizeView Policy="@Permissions.Jobs.View">
+            <a href="hangfire" class="mt-3 inline-block text-sm font-semibold text-brand-700 hover:text-brand-800">Open Hangfire</a>
+        </AuthorizeView>
+    </article>
+    <article class="metric-card sm:col-span-2">
+        <span class="icon-well">
+            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0m6 0H9" /></svg>
+        </span>
+        <h2 class="mt-4 text-md font-semibold text-gray-900">Notifications</h2>
+        <p class="mt-1 text-sm text-gray-600">Toasts confirm something that can disappear. The bell keeps anything you may need later. Try the four Untitled UI kinds:</p>
+        <div class="mt-4 flex flex-wrap gap-2">
+            <button type="button" class="btn btn-secondary" data-toast-kind="success" data-toast-title="Changes saved" data-toast-message="Your profile was updated just now.">Success</button>
+            <button type="button" class="btn btn-secondary" data-toast-kind="brand" data-toast-title="New feature available" data-toast-message="Permission types can be added without a rebuild." data-toast-action-url="admin/permissions" data-toast-action-text="Open permissions">Brand</button>
+            <button type="button" class="btn btn-secondary" data-toast-kind="warning" data-toast-title="Check your backup" data-toast-message="The last export finished with warnings.">Warning</button>
+            <button type="button" class="btn btn-secondary" data-toast-kind="error" data-toast-title="Couldn't save changes" data-toast-message="Check the form and try again. Errors that need a fix stay on the page.">Error</button>
+        </div>
+        <a href="notifications" class="mt-4 inline-block text-sm font-semibold text-brand-700 hover:text-brand-800">Open notification inbox</a>
+    </article>
+</div>

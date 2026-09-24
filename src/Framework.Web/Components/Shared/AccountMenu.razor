@@ -1,0 +1,93 @@
+@implements IDisposable
+@inject NavigationManager NavigationManager
+
+<div class="account-menu" data-account-menu data-account-menu-placement="@Placement">
+    <button type="button"
+            class="@TriggerClass"
+            data-account-menu-trigger
+            popovertarget="@PanelId"
+            popovertargetaction="toggle"
+            aria-haspopup="menu"
+            aria-expanded="false"
+            aria-controls="@PanelId">
+        <UserAvatar Name="@Name" Email="@Email" Size="sm" />
+        <span class="@MetaClass">
+            <span class="block truncate text-sm font-semibold text-gray-900">@(Name ?? Email)</span>
+            @if (!string.IsNullOrWhiteSpace(Subtitle))
+            {
+                <span class="block truncate text-xs text-gray-600">@Subtitle</span>
+            }
+        </span>
+        <svg class="account-menu-chevron size-4 shrink-0 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" />
+        </svg>
+    </button>
+    <div id="@PanelId" class="account-menu-panel" popover="auto" data-account-menu-panel>
+        <div class="flex items-center gap-3 px-3 py-2.5">
+            <UserAvatar Name="@Name" Email="@Email" Size="sm" />
+            <div class="min-w-0">
+                <p class="truncate text-sm font-semibold text-gray-900">@(Name ?? Email)</p>
+                <p class="truncate text-xs text-gray-600">Signed in</p>
+            </div>
+        </div>
+        <div class="my-1 border-t border-gray-200"></div>
+        <a href="Account/Manage" class="account-menu-item" role="menuitem">
+            <svg class="size-5 shrink-0 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true">
+                <circle cx="12" cy="8" r="3.25" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.2 18.5c.9-2.4 3.1-4 5.8-4s4.9 1.6 5.8 4" />
+            </svg>
+            Account settings
+        </a>
+        <form action="Account/Logout" method="post">
+            <AntiforgeryToken />
+            <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+            <button type="submit" class="account-menu-item" role="menuitem">
+                <svg class="size-5 shrink-0 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12H4M10 7l-5 5 5 5M15 5h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-3" />
+                </svg>
+                Sign out
+            </button>
+        </form>
+    </div>
+</div>
+
+@code {
+    private string? currentUrl;
+
+    [Parameter]
+    public string Id { get; set; } = "account";
+
+    [Parameter]
+    public string Placement { get; set; } = "header";
+
+    [Parameter]
+    public string? Name { get; set; }
+
+    [Parameter]
+    public string? Email { get; set; }
+
+    [Parameter]
+    public string? Subtitle { get; set; }
+
+    [Parameter]
+    public string TriggerClass { get; set; } = "account-menu-trigger";
+
+    [Parameter]
+    public string MetaClass { get; set; } = "account-menu-meta min-w-0";
+
+    private string PanelId => $"account-menu-{Id}";
+
+    protected override void OnInitialized()
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    public void Dispose() => NavigationManager.LocationChanged -= OnLocationChanged;
+}

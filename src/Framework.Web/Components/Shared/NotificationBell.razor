@@ -1,0 +1,36 @@
+<div class="notification-menu" data-notification-menu>
+    <AntiforgeryToken />
+    <button type="button"
+            class="notification-trigger"
+            data-notification-trigger
+            popovertarget="header-notification-panel"
+            popovertargetaction="toggle"
+            aria-haspopup="dialog"
+            aria-expanded="false"
+            aria-controls="header-notification-panel"
+            aria-label="Notifications">
+        <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0m6 0H9" />
+        </svg>
+        <span class="notification-badge" data-notification-badge hidden>0</span>
+    </button>
+    <div id="header-notification-panel" class="notification-panel" popover="auto" data-notification-panel>
+        <div class="flex items-center justify-between gap-3 px-4 py-3">
+            <div>
+                <p class="text-sm font-semibold text-gray-900">Notifications</p>
+                <p class="text-xs text-gray-600" data-notification-subtitle>Loading…</p>
+            </div>
+            <button type="button" class="text-sm font-semibold text-brand-700 hover:text-brand-800 disabled:text-gray-400" data-notification-read-all disabled>
+                Mark all read
+            </button>
+        </div>
+        <div class="notification-list" data-notification-list>
+            <div class="notification-empty">
+                <p class="text-sm text-gray-600">Loading notifications…</p>
+            </div>
+        </div>
+        <div class="border-t border-gray-200 p-2">
+            <a href="notifications" class="account-menu-item justify-center">View all notifications</a>
+        </div>
+    </div>
+</div>

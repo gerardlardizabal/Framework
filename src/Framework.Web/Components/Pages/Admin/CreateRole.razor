@@ -1,0 +1,61 @@
+@page "/admin/roles/new"
+@rendermode InteractiveServer
+@using Framework.Application.Identity.Roles
+@using MediatR
+@attribute [HasPermission(Permissions.Roles.Create)]
+@inject IMediator Mediator
+@inject NavigationManager Navigation
+
+<PageTitle>New role</PageTitle>
+
+<PageHeader Eyebrow="Roles" Title="Create role" Subtitle="You can assign permissions after the role exists." />
+
+<AlertBanner Message="@message" IsError="true" />
+
+<div class="card max-w-xl">
+    <EditForm Model="model" OnValidSubmit="SaveAsync">
+        <DataAnnotationsValidator />
+        <label class="field">
+            <span class="field-label">Name</span>
+            <InputText class="field-input" @bind-Value="model.Name" />
+            <ValidationMessage For="() => model.Name" />
+        </label>
+        <label class="field">
+            <span class="field-label">Description</span>
+            <InputText class="field-input" @bind-Value="model.Description" />
+        </label>
+        <div class="flex gap-3">
+            <button type="submit" class="btn btn-primary" disabled="@saving">Create role</button>
+            <a href="admin/roles" class="btn btn-secondary">Cancel</a>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    private readonly FormModel model = new();
+    private string? message;
+    private bool saving;
+
+    private async Task SaveAsync()
+    {
+        saving = true;
+        var result = await Mediator.Send(new CreateRoleCommand(model.Name, model.Description));
+        saving = false;
+
+        if (result.Succeeded)
+        {
+            Navigation.NavigateTo($"admin/roles/{result.Value}");
+            return;
+        }
+
+        message = string.Join(" ", result.Errors);
+    }
+
+    private sealed class FormModel
+    {
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Name { get; set; } = "";
+
+        public string? Description { get; set; }
+    }
+}

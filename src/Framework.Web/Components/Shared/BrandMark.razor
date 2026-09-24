@@ -1,0 +1,19 @@
+<a href="" class="@Css">
+    <span class="grid size-8 place-items-center rounded-full bg-brand-600 text-sm font-semibold text-white shadow-xs">F</span>
+    @if (ShowWordmark)
+    {
+        <span class="sidebar-wordmark text-lg font-semibold tracking-tight text-gray-900">Framework</span>
+    }
+</a>
+
+@code {
+    [Parameter]
+    public bool ShowWordmark { get; set; } = true;
+
+    [Parameter]
+    public string? Class { get; set; }
+
+    private string Css => string.IsNullOrWhiteSpace(Class)
+        ? "inline-flex items-center gap-2.5"
+        : $"inline-flex items-center gap-2.5 {Class}";
+}

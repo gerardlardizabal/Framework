@@ -1,0 +1,140 @@
+@page "/admin/roles/{Id:guid}"
+@rendermode InteractiveServer
+@using Framework.Application.Identity
+@using Framework.Application.Identity.Roles
+@using Framework.Application.Identity.PermissionCatalog
+@using MediatR
+@attribute [HasPermission(Permissions.Roles.Edit)]
+@inject IMediator Mediator
+@inject NavigationManager Navigation
+
+<PageTitle>Edit role</PageTitle>
+
+<PageHeader Eyebrow="Roles" Title="Edit role" Subtitle="Permissions granted here become claims on every user in the role." />
+
+<AlertBanner Message="@message" IsError="isError" />
+
+@if (model is null)
+{
+    <p class="text-sm text-gray-600">Loading…</p>
+}
+else
+{
+    <div class="card">
+        <EditForm Model="model" OnValidSubmit="SaveAsync">
+            <label class="field max-w-xl">
+                <span class="field-label">Name</span>
+                <InputText class="field-input" @bind-Value="model.Name" disabled="@isAdministrator" />
+            </label>
+            <label class="field max-w-xl">
+                <span class="field-label">Description</span>
+                <InputText class="field-input" @bind-Value="model.Description" />
+            </label>
+            <div class="mb-6 rounded-xl border border-gray-200 p-4">
+                <h2 class="mb-4 text-md">Permissions</h2>
+                @if (isAdministrator)
+                {
+                    <p class="mb-4 text-sm text-gray-600">The Administrator role always has every permission.</p>
+                }
+                <PermissionChecklist Items="catalog" Selected="model.Permissions" SelectedChanged="OnPermissionsChanged" Disabled="isAdministrator" />
+            </div>
+            <div class="flex flex-wrap gap-3">
+                <button type="submit" class="btn btn-primary" disabled="@saving">Save changes</button>
+                <a href="admin/roles" class="btn btn-secondary">Back</a>
+                @if (!isBuiltIn)
+                {
+                    <AuthorizeView Policy="@Permissions.Roles.Delete" Context="auth">
+                        <button type="button" class="btn btn-danger ml-auto" disabled="@saving" @onclick="DeleteAsync">Delete</button>
+                    </AuthorizeView>
+                }
+            </div>
+        </EditForm>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private FormModel? model;
+    private IReadOnlyList<PermissionListItemDto> catalog = [];
+    private string? message;
+    private bool isError;
+    private bool saving;
+    private bool isAdministrator;
+    private bool isBuiltIn;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var role = await Mediator.Send(new GetRoleQuery(Id));
+        if (role is null)
+        {
+            Navigation.NavigateTo("admin/roles");
+            return;
+        }
+
+        catalog = await Mediator.Send(new GetPermissionsQuery());
+        isAdministrator = role.Name == RoleNames.Administrator;
+        isBuiltIn = role.Name is RoleNames.Administrator or RoleNames.User;
+        model = new FormModel
+        {
+            Name = role.Name,
+            Description = role.Description,
+            Permissions = isAdministrator
+                ? catalog.Select(permission => permission.Name).ToHashSet()
+                : role.Permissions.ToHashSet()
+        };
+    }
+
+    private Task OnPermissionsChanged(IReadOnlyList<string> permissions)
+    {
+        if (model is not null)
+        {
+            model.Permissions = permissions.ToHashSet();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (model is null)
+        {
+            return;
+        }
+
+        saving = true;
+        var result = await Mediator.Send(new UpdateRoleCommand(
+            Id,
+            model.Name,
+            model.Description,
+            model.Permissions.ToArray()));
+        saving = false;
+
+        isError = !result.Succeeded;
+        message = result.Succeeded ? "Role updated." : string.Join(" ", result.Errors);
+    }
+
+    private async Task DeleteAsync()
+    {
+        saving = true;
+        var result = await Mediator.Send(new DeleteRoleCommand(Id));
+        saving = false;
+
+        if (result.Succeeded)
+        {
+            Navigation.NavigateTo("admin/roles");
+            return;
+        }
+
+        isError = true;
+        message = string.Join(" ", result.Errors);
+    }
+
+    private sealed class FormModel
+    {
+        public string Name { get; set; } = "";
+        public string? Description { get; set; }
+        public HashSet<string> Permissions { get; set; } = [];
+    }
+}

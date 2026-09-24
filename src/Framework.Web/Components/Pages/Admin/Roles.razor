@@ -1,0 +1,62 @@
+@page "/admin/roles"
+@rendermode InteractiveServer
+@using Framework.Application.Identity
+@using Framework.Application.Identity.Roles
+@using MediatR
+@attribute [HasPermission(Permissions.Roles.View)]
+@inject IMediator Mediator
+
+<PageTitle>Roles</PageTitle>
+
+<PageHeader Eyebrow="Administration" Title="Roles" Subtitle="Roles collect permissions. Users inherit every permission of their assigned roles.">
+    <AuthorizeView Policy="@Permissions.Roles.Create">
+        <a href="admin/roles/new" class="btn btn-primary">New role</a>
+    </AuthorizeView>
+</PageHeader>
+
+<div class="table-wrap">
+    @if (roles is null)
+    {
+        <p class="px-6 py-10 text-sm text-gray-600">Loading roles…</p>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Role</th>
+                    <th>Users</th>
+                    <th>Permissions</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var role in roles)
+                {
+                    <tr>
+                        <td>
+                            <div class="font-medium text-gray-900">@role.Name</div>
+                            <div class="text-sm text-gray-600">@role.Description</div>
+                        </td>
+                        <td>@role.UserCount</td>
+                        <td>@role.PermissionCount</td>
+                        <td class="text-right">
+                            <AuthorizeView Policy="@Permissions.Roles.Edit">
+                                <a class="text-sm font-semibold text-brand-700 hover:text-brand-800" href="@($"admin/roles/{role.Id}")">Edit</a>
+                            </AuthorizeView>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    private IReadOnlyList<RoleListItemDto>? roles;
+
+    protected override async Task OnInitializedAsync()
+    {
+        roles = await Mediator.Send(new GetRolesQuery());
+    }
+}

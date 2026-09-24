@@ -1,0 +1,133 @@
+@page "/notifications"
+@rendermode InteractiveServer
+@using Framework.Application.Notifications
+@using MediatR
+@attribute [Authorize]
+@inject IMediator Mediator
+@inject IJSRuntime JS
+
+<PageTitle>Notifications</PageTitle>
+
+<PageHeader Eyebrow="Account" Title="Notifications" Subtitle="Inbox items stay here. Toasts are for short confirmations that can disappear.">
+    @if (unreadCount > 0)
+    {
+        <button type="button" class="btn btn-secondary" @onclick="MarkAllReadAsync" disabled="@working">Mark all read</button>
+    }
+</PageHeader>
+
+@if (items is null)
+{
+    <p class="text-sm text-gray-600">Loading notifications…</p>
+}
+else if (items.Count == 0)
+{
+    <div class="card py-16 text-center">
+        <span class="notification-kind notification-kind-success mx-auto">
+            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m5 13 4 4L19 7" /></svg>
+        </span>
+        <h2 class="mt-4 text-md font-semibold text-gray-900">You're all caught up</h2>
+        <p class="mt-1 text-sm text-gray-600">New notifications will appear here when something needs your attention later.</p>
+    </div>
+}
+else
+{
+    <div class="table-wrap">
+        <div class="divide-y divide-gray-200">
+            @foreach (var item in items)
+            {
+                <div class="flex items-start gap-4 px-6 py-4 @(item.IsRead ? "" : "bg-gray-25")">
+                    <span class="notification-kind @KindClass(item.Kind)">@KindIcon(item.Kind)</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex flex-wrap items-start justify-between gap-2">
+                            <p class="text-sm font-semibold text-gray-900">@item.Title</p>
+                            <p class="text-xs text-gray-500">@item.RelativeTime</p>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(item.Message))
+                        {
+                            <p class="mt-1 text-sm text-gray-600">@item.Message</p>
+                        }
+                        <div class="mt-3 flex flex-wrap gap-3">
+                            @if (!string.IsNullOrWhiteSpace(item.ActionUrl))
+                            {
+                                <a class="text-sm font-semibold text-brand-700 hover:text-brand-800" href="@item.ActionUrl">@(item.ActionText ?? "View")</a>
+                            }
+                            @if (!item.IsRead)
+                            {
+                                <button type="button" class="text-sm font-semibold text-gray-600 hover:text-gray-800" @onclick="() => MarkReadAsync(item.Id)">
+                                    Mark as read
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private IReadOnlyList<NotificationDto>? items;
+    private int unreadCount;
+    private bool working;
+    private bool refreshBell;
+
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!refreshBell)
+        {
+            return;
+        }
+
+        refreshBell = false;
+        try
+        {
+            await JS.InvokeVoidAsync("frameworkUi.refreshNotifications");
+        }
+        catch (JSException)
+        {
+            /* layout bell is loaded by script, not the circuit */
+        }
+    }
+
+    private async Task ReloadAsync()
+    {
+        items = await Mediator.Send(new GetNotificationsQuery(50));
+        unreadCount = await Mediator.Send(new GetUnreadNotificationCountQuery());
+        refreshBell = true;
+    }
+
+    private async Task MarkReadAsync(Guid id)
+    {
+        await Mediator.Send(new MarkNotificationReadCommand(id));
+        await ReloadAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task MarkAllReadAsync()
+    {
+        working = true;
+        await Mediator.Send(new MarkAllNotificationsReadCommand());
+        await ReloadAsync();
+        working = false;
+    }
+
+    private static string KindClass(string kind) => kind.ToLowerInvariant() switch
+    {
+        "brand" => "notification-kind-brand",
+        "success" => "notification-kind-success",
+        "warning" => "notification-kind-warning",
+        "error" => "notification-kind-error",
+        _ => "notification-kind-default"
+    };
+
+    private static RenderFragment KindIcon(string kind) => kind.ToLowerInvariant() switch
+    {
+        "success" => @<svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m5 13 4 4L19 7" /></svg>,
+        "warning" => @<svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><path stroke-linecap="round" d="M12 9v4M12 17h.01" /><path stroke-linecap="round" stroke-linejoin="round" d="M10.3 4.7 2.8 18a2 2 0 0 0 1.7 3h15a2 2 0 0 0 1.7-3L13.7 4.7a2 2 0 0 0-3.4 0Z" /></svg>,
+        "error" => @<svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><circle cx="12" cy="12" r="8" /><path stroke-linecap="round" d="m9 9 6 6M15 9l-6 6" /></svg>,
+        "brand" => @<svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 3 4 14h7l-1 7 9-11h-7z" /></svg>,
+        _ => @<svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><circle cx="12" cy="12" r="8" /><path stroke-linecap="round" d="M12 8v4M12 16h.01" /></svg>
+    };
+}
