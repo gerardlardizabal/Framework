@@ -1,0 +1,36 @@
+@rendermode InteractiveServer
+@inject IDialogService Dialogs
+
+<DialogHost />
+<div class="mt-4 flex flex-wrap gap-2">
+    <button type="button" class="btn btn-secondary" @onclick="ShowMessageAsync">Message</button>
+    <button type="button" class="btn btn-secondary" @onclick="ShowConfirmAsync">Confirm</button>
+</div>
+
+@code {
+    private async Task ShowMessageAsync()
+    {
+        await Dialogs.ShowMessageAsync(
+            "Your changes were saved",
+            "Profile details are up to date. You can keep working from here.",
+            DialogKind.Success);
+    }
+
+    private async Task ShowConfirmAsync()
+    {
+        var confirmed = await Dialogs.ConfirmAsync(
+            "Delete this project?",
+            "This removes the project and its files. This action cannot be undone.",
+            kind: DialogKind.Error,
+            confirmText: "Delete",
+            destructive: true);
+
+        if (confirmed)
+        {
+            await Dialogs.ShowMessageAsync(
+                "Project deleted",
+                "The project was removed from this workspace.",
+                DialogKind.Success);
+        }
+    }
+}

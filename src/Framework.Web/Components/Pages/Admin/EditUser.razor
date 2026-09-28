@@ -6,11 +6,13 @@
 @attribute [HasPermission(Permissions.Users.Edit)]
 @inject IMediator Mediator
 @inject NavigationManager Navigation
+@inject IDialogService Dialogs
 
 <PageTitle>Edit user</PageTitle>
 
 <PageHeader Eyebrow="Users" Title="Edit user" Subtitle="Update profile details, roles, and account status." />
 
+<DialogHost />
 <AlertBanner Message="@message" IsError="isError" />
 
 @if (model is null)
@@ -130,6 +132,17 @@ else
 
     private async Task DeleteAsync()
     {
+        var confirmed = await Dialogs.ConfirmAsync(
+            "Delete user?",
+            "This account will be removed and they will no longer be able to sign in. This action cannot be undone.",
+            kind: DialogKind.Error,
+            confirmText: "Delete",
+            destructive: true);
+        if (!confirmed)
+        {
+            return;
+        }
+
         saving = true;
         var result = await Mediator.Send(new DeleteUserCommand(Id));
         saving = false;
@@ -142,6 +155,7 @@ else
 
         isError = true;
         message = string.Join(" ", result.Errors);
+        await Dialogs.ShowMessageAsync("Couldn't delete user", message, DialogKind.Error);
     }
 
     private sealed class FormModel

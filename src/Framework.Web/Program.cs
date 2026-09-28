@@ -7,6 +7,7 @@ using Framework.Infrastructure.Identity;
 using Framework.Infrastructure.Jobs;
 using Framework.Web.Components;
 using Framework.Web.Components.Account;
+using Framework.Web.Components.Shared;
 using Framework.Web.ExceptionHandling;
 using Framework.Web.Notifications;
 using Serilog;
@@ -66,6 +67,8 @@ public class Program
             });
             builder.Services.AddApplication();
             builder.Services.AddInfrastructure(builder.Configuration);
+            builder.Services.AddScoped<DialogService>();
+            builder.Services.AddScoped<IDialogService>(services => services.GetRequiredService<DialogService>());
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
             builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 

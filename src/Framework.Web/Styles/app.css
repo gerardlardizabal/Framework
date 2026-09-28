@@ -559,6 +559,54 @@
   .notification-empty .notification-kind {
     @apply mx-auto;
   }
+
+  .app-dialog {
+    width: min(25rem, calc(100vw - 2rem));
+    max-height: calc(100vh - 2rem);
+    padding: 0;
+    border: none;
+    border-radius: 0.75rem;
+    background: var(--color-white, #fff);
+    color: inherit;
+    box-shadow: var(--shadow-md);
+    position: fixed;
+    inset: 0;
+    margin: auto;
+    height: fit-content;
+    overflow: auto;
+  }
+
+  .app-dialog:focus {
+    outline: none;
+  }
+
+  .app-dialog::backdrop {
+    background: rgb(16 24 40 / 0.7);
+  }
+
+  .app-dialog-panel {
+    @apply relative px-6 pb-6 pt-6;
+  }
+
+  .app-dialog-close {
+    @apply absolute right-3 top-3 rounded-md p-1 text-gray-400 hover:bg-gray-50 hover:text-gray-600;
+  }
+
+  .app-dialog-icon {
+    @apply mb-4 grid size-12 place-items-center rounded-full border border-gray-200;
+  }
+
+  .app-dialog-actions {
+    @apply mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2;
+  }
+
+  .app-dialog-actions:has(:only-child) {
+    @apply sm:grid-cols-1;
+  }
+
+  .app-dialog-actions .btn {
+    @apply w-full;
+  }
 }
 
 #blazor-error-ui {

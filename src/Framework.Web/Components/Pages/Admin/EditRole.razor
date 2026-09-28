@@ -7,11 +7,13 @@
 @attribute [HasPermission(Permissions.Roles.Edit)]
 @inject IMediator Mediator
 @inject NavigationManager Navigation
+@inject IDialogService Dialogs
 
 <PageTitle>Edit role</PageTitle>
 
 <PageHeader Eyebrow="Roles" Title="Edit role" Subtitle="Permissions granted here become claims on every user in the role." />
 
+<DialogHost />
 <AlertBanner Message="@message" IsError="isError" />
 
 @if (model is null)
@@ -117,6 +119,17 @@ else
 
     private async Task DeleteAsync()
     {
+        var confirmed = await Dialogs.ConfirmAsync(
+            "Delete role?",
+            "Users with this role will lose the permissions it grants. This action cannot be undone.",
+            kind: DialogKind.Error,
+            confirmText: "Delete",
+            destructive: true);
+        if (!confirmed)
+        {
+            return;
+        }
+
         saving = true;
         var result = await Mediator.Send(new DeleteRoleCommand(Id));
         saving = false;
@@ -129,6 +142,7 @@ else
 
         isError = true;
         message = string.Join(" ", result.Errors);
+        await Dialogs.ShowMessageAsync("Couldn't delete role", message, DialogKind.Error);
     }
 
     private sealed class FormModel

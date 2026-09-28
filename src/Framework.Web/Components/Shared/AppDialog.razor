@@ -1,0 +1,164 @@
+@inject IJSRuntime JS
+
+<dialog @ref="dialog"
+        class="app-dialog"
+        aria-labelledby="@titleId"
+        aria-describedby="@(string.IsNullOrWhiteSpace(Message) && ChildContent is null ? null : descriptionId)"
+        @onclose="HandleCloseAsync">
+    <div class="app-dialog-panel">
+        <button type="button" class="app-dialog-close" aria-label="Close" @onclick="CancelAsync">
+            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true">
+                <path stroke-linecap="round" d="M6 6l12 12M18 6 6 18" />
+            </svg>
+        </button>
+        <span class="app-dialog-icon">
+            <span class="notification-kind @KindClass">@KindIcon</span>
+        </span>
+        <h2 id="@titleId" class="text-lg font-semibold text-gray-900">@Title</h2>
+        @if (!string.IsNullOrWhiteSpace(Message) || ChildContent is not null)
+        {
+            <div id="@descriptionId" class="mt-1 text-sm text-gray-600">
+                @if (!string.IsNullOrWhiteSpace(Message))
+                {
+                    <p>@Message</p>
+                }
+                @ChildContent
+            </div>
+        }
+        <div class="app-dialog-actions">
+            @if (Mode == DialogMode.Confirmation)
+            {
+                <button type="button" class="btn btn-secondary" disabled="@Busy" @onclick="CancelAsync">@CancelText</button>
+                <button type="button" class="@(Destructive ? "btn btn-danger" : "btn btn-primary")" disabled="@Busy" @onclick="ConfirmAsync">@ConfirmText</button>
+            }
+            else
+            {
+                <button type="button" class="btn btn-primary w-full" disabled="@Busy" @onclick="ConfirmAsync">@AcknowledgeText</button>
+            }
+        </div>
+    </div>
+</dialog>
+
+@code {
+    private readonly string titleId = $"dialog-title-{Guid.NewGuid():N}";
+    private readonly string descriptionId = $"dialog-description-{Guid.NewGuid():N}";
+    private ElementReference dialog;
+    private bool wasOpen;
+    private bool closingFromAction;
+
+    [Parameter]
+    public bool Open { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> OpenChanged { get; set; }
+
+    [Parameter]
+    public DialogMode Mode { get; set; } = DialogMode.Message;
+
+    [Parameter]
+    public DialogKind Kind { get; set; } = DialogKind.Default;
+
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = "";
+
+    [Parameter]
+    public string? Message { get; set; }
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public string AcknowledgeText { get; set; } = "OK";
+
+    [Parameter]
+    public string ConfirmText { get; set; } = "Confirm";
+
+    [Parameter]
+    public string CancelText { get; set; } = "Cancel";
+
+    [Parameter]
+    public bool Destructive { get; set; }
+
+    [Parameter]
+    public bool Busy { get; set; }
+
+    [Parameter]
+    public EventCallback OnConfirm { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    private string KindClass => Kind switch
+    {
+        DialogKind.Brand => "notification-kind-brand",
+        DialogKind.Success => "notification-kind-success",
+        DialogKind.Warning => "notification-kind-warning",
+        DialogKind.Error => "notification-kind-error",
+        _ => "notification-kind-default"
+    };
+
+    private RenderFragment KindIcon => Kind switch
+    {
+        DialogKind.Success => @<svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m5 13 4 4L19 7" /></svg>,
+        DialogKind.Warning => @<svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><path stroke-linecap="round" d="M12 9v4M12 17h.01" /><path stroke-linecap="round" stroke-linejoin="round" d="M10.3 4.7 2.8 18a2 2 0 0 0 1.7 3h15a2 2 0 0 0 1.7-3L13.7 4.7a2 2 0 0 0-3.4 0Z" /></svg>,
+        DialogKind.Error => @<svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><circle cx="12" cy="12" r="8" /><path stroke-linecap="round" d="m9 9 6 6M15 9l-6 6" /></svg>,
+        DialogKind.Brand => @<svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 3 4 14h7l-1 7 9-11h-7z" /></svg>,
+        _ => @<svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.67" aria-hidden="true"><circle cx="12" cy="12" r="8" /><path stroke-linecap="round" d="M12 8v4M12 16h.01" /></svg>
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Open == wasOpen)
+        {
+            return;
+        }
+
+        wasOpen = Open;
+        try
+        {
+            if (Open)
+            {
+                await JS.InvokeVoidAsync("frameworkUi.showDialog", dialog);
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("frameworkUi.closeDialog", dialog);
+            }
+        }
+        catch (JSException)
+        {
+        }
+    }
+
+    private async Task ConfirmAsync()
+    {
+        closingFromAction = true;
+        await SetOpenAsync(false);
+        await OnConfirm.InvokeAsync();
+    }
+
+    private async Task CancelAsync()
+    {
+        closingFromAction = true;
+        await SetOpenAsync(false);
+        await OnCancel.InvokeAsync();
+    }
+
+    private async Task HandleCloseAsync()
+    {
+        if (closingFromAction)
+        {
+            closingFromAction = false;
+            return;
+        }
+
+        await SetOpenAsync(false);
+        await OnCancel.InvokeAsync();
+    }
+
+    private Task SetOpenAsync(bool value)
+    {
+        Open = value;
+        return OpenChanged.InvokeAsync(value);
+    }
+}

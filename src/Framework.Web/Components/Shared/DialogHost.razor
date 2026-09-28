@@ -1,0 +1,61 @@
+@inject DialogService Dialogs
+@implements IDisposable
+
+@if (request is not null)
+{
+    <AppDialog @bind-Open="open"
+               Title="@request.Title"
+               Message="@request.Message"
+               Mode="@request.Mode"
+               Kind="@request.Kind"
+               AcknowledgeText="@request.AcknowledgeText"
+               ConfirmText="@request.ConfirmText"
+               CancelText="@request.CancelText"
+               Destructive="@request.Destructive"
+               OnConfirm="OnConfirmed"
+               OnCancel="OnCancelled" />
+}
+
+@code {
+    private DialogRequest? request;
+    private bool open;
+    private TaskCompletionSource<bool>? completion;
+    private Func<DialogRequest, Task<bool>>? handler;
+
+    protected override void OnInitialized()
+    {
+        handler = ShowAsync;
+        Dialogs.Register(handler);
+    }
+
+    public void Dispose()
+    {
+        if (handler is not null)
+        {
+            Dialogs.Unregister(handler);
+        }
+
+        completion?.TrySetResult(false);
+    }
+
+    private async Task<bool> ShowAsync(DialogRequest next)
+    {
+        completion?.TrySetResult(false);
+        request = next;
+        open = true;
+        completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        await InvokeAsync(StateHasChanged);
+        return await completion.Task;
+    }
+
+    private void OnConfirmed() => Finish(true);
+
+    private void OnCancelled() => Finish(false);
+
+    private void Finish(bool confirmed)
+    {
+        open = false;
+        completion?.TrySetResult(confirmed);
+        completion = null;
+    }
+}

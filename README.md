@@ -91,6 +91,34 @@ In-app notifications follow Untitled UI cues: a floating toast for short confirm
 - The bell lists recent items with unread count. Full history is at `/notifications`. Authenticated users only see their own.
 - Create inbox items from Application with `INotificationService` or `CreateNotificationCommand`. Creating a user already notifies the signed-in administrator.
 
+## Dialogs
+
+`AppDialog` is an Untitled UI-style modal for **message** (acknowledge) and **confirmation** (cancel / confirm) flows. Interactive Server pages inject `IDialogService` and render `<DialogHost />` once on the same circuit.
+
+```razor
+<DialogHost />
+
+@code {
+    private async Task DeleteAsync()
+    {
+        if (!await Dialogs.ConfirmAsync(
+            "Delete user?",
+            "This account will be removed. This action cannot be undone.",
+            kind: DialogKind.Error,
+            confirmText: "Delete",
+            destructive: true))
+        {
+            return;
+        }
+
+        // ...
+        await Dialogs.ShowMessageAsync("Couldn't delete user", error, DialogKind.Error);
+    }
+}
+```
+
+Delete on users, roles, and permission types uses confirmation. Dashboard includes a Message / Confirm demo.
+
 ## Tailwind v4
 
 CSS is compiled as part of the Web project build:
